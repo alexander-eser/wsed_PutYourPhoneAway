@@ -7,7 +7,7 @@ const canvasWrapper = {
         height: 0,
         left: 0,
         top: 0,
-        init (id, callback, initRes) {
+        init(id, callback, initRes) {
             this.elem = document.getElementById(id);
             this.callback = callback || null;
             if (this.elem.tagName === "CANVAS") this.ctx = this.elem.getContext("2d");
@@ -54,8 +54,9 @@ class Point {
     }
 }
 
-class Ball {
-    constructor (parent) {
+class Bubble {
+
+    constructor(parent, isDeviceBubble) {
         const min = .1;
         const max = 1.5;
         this.vel = new Point(
@@ -66,9 +67,18 @@ class Ball {
             parent.width * 0.2 + Math.random() * parent.width * 0.6,
             parent.height * 0.2 + Math.random() * parent.height * 0.6
         );
-        this.size = (parent.wh / 25) + (Math.random() * (max - min) + min) * (parent.wh / 25);
+
+        if (isDeviceBubble) {
+            this.size = (parent.wh / 5) + (Math.random() * (max - min) + min) * (parent.wh / 5);
+
+        } else {
+            this.size = (parent.wh / 25) + (Math.random() * (max - min) + min) * (parent.wh / 25);
+        }
+
         this.width = parent.width;
         this.height = parent.height;
+
+
     }
 
     move() {
@@ -94,7 +104,7 @@ class Ball {
     }
 }
 
-class LavaLamp {
+class DeviceCanvas {
     constructor(width, height, color) {
         this.step = 5;
         this.width = width;
@@ -116,12 +126,12 @@ class LavaLamp {
 
         // init grid
         this.grid = new Array((this.sx + 2) * (this.sy + 2)).fill(0)
-            .map((_,i) => new Point(
-            (i % (this.sx + 2)) * this.step,
-            (Math.floor(i / (this.sx + 2))) * this.step
-        ));
+            .map((_, i) => new Point(
+                (i % (this.sx + 2)) * this.step,
+                (Math.floor(i / (this.sx + 2))) * this.step
+            ));
 
-        this.balls.push(new Ball(this));
+        this.balls.push(new Bubble(this, true));
     }
 
     // Compute cell force
@@ -145,7 +155,7 @@ class LavaLamp {
         return force;
     };
 
-    marchingSquares (next) {
+    marchingSquares(next) {
         var x = next[0];
         var y = next[1];
         var pdir = next[2];
@@ -245,14 +255,14 @@ const run = () => {
     requestAnimationFrame(run);
     ctx.clearRect(0, 0, screen.width, screen.height);
 
-    // Render Bubbles for each LavaLamp
+    // Render Bubbles for each DeviceCanvas
     Object.values(clients).forEach(lavaLamp => lavaLamp.renderBubbles())
 };
 
-/*  lava0 = new LavaLamp(screen.width, screen.height, 3, "#FFD850");
-  lava1 = new LavaLamp(screen.width, screen.height, 3, "#FFA370");
-  lava2 = new LavaLamp(screen.width, screen.height, 3, "#FF7D7D");
-  lava3 = new LavaLamp(screen.width, screen.height, 3, "#05AFBA");*/
+/*  lava0 = new DeviceCanvas(screen.width, screen.height, 3, "#FFD850");
+  lava1 = new DeviceCanvas(screen.width, screen.height, 3, "#FFA370");
+  lava2 = new DeviceCanvas(screen.width, screen.height, 3, "#FF7D7D");
+  lava3 = new DeviceCanvas(screen.width, screen.height, 3, "#05AFBA");*/
 
 // Create a client instance
 const client = new Paho.MQTT.Client("broker.hivemq.com", 8000, `bubbleClient${new Date().getTime()}`);
@@ -272,20 +282,22 @@ client.onMessageArrived = (message) => {
         case 'esp32_client_connected':
         case 'ble_client_connected':
             if (eventMessage.device_address) {
-                clients[eventMessage.device_address] = new LavaLamp(screen.width, screen.height, "#FFD850");
+                clients[eventMessage.device_address] = new DeviceCanvas(screen.width, screen.height, "#FFD850");
             }
             break;
         case 'notification_arrived':
-
+            clients[eventMessage.device_address] = new Bubble(this, false);
             break;
     }
 };
 
 // connect the client
-client.connect({onSuccess() {
-    // Once a connection has been made, make a subscription and send a message.
-    console.log("onConnect");
-    client.subscribe("8b4dac03-9840-46fb-8eaf-30bb4f4a8384");
-}});
+client.connect({
+    onSuccess() {
+        // Once a connection has been made, make a subscription and send a message.
+        console.log("onConnect");
+        client.subscribe("8b4dac03-9840-46fb-8eaf-30bb4f4a8384");
+    }
+});
 
 run();
