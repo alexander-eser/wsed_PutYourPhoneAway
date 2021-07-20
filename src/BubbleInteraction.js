@@ -142,7 +142,7 @@ class DeviceCanvas {
         const id = idx || x + y * (this.sx + 2);
 
         if (x === 0 || y === 0 || x === this.sx || y === this.sy) {
-            force = 0.6 * this.sign;
+            force = 0.1 * this.sign;
         } else {
             force = 0;
             const cell = this.grid[id];
@@ -255,7 +255,7 @@ const devices = {};
 const getOrCreateDevice = (address) => {
     let device = devices[address]
     if (!device) {
-        const color = colors[Object.keys(devices).length % (colors.length - 1)];
+        const color = colors[Object.keys(devices).length % colors.length];
         device = new DeviceCanvas(screen.width, screen.height, color);
         devices[address] = device;
     }
