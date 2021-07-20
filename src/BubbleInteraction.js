@@ -7,6 +7,8 @@
     let lava2;
     let lava3;
 
+    let canvasTag;
+
     var ge1doot = {
         screen: {
             elem: null,
@@ -20,15 +22,20 @@
                 this.elem = document.getElementById(id);
                 this.callback = callback || null;
                 if (this.elem.tagName === "CANVAS") this.ctx = this.elem.getContext("2d");
+
                 window.addEventListener('resize', function () {
                     this.resize();
                 }.bind(this), false);
+
+
                 this.elem.onselectstart = function () {
                     return false;
                 }
+
                 this.elem.ondrag = function () {
                     return false;
                 }
+
                 initRes && this.resize();
                 return this;
             },
@@ -75,6 +82,18 @@
         this.size = (parent.wh / 25) + (Math.random() * (max - min) + min) * (parent.wh / 25);
         this.width = parent.width;
         this.height = parent.height;
+
+        /*    canvasTag = document.getElementById("bubble").getContext("2d");
+            canvasTag.fillStyle = "#000";
+            canvasTag.translate(50,50);
+            canvasTag.arc(0,0,20,0,Math.PI*2);
+            canvasTag.fill();
+
+            // ctx.beginPath();
+            canvasTag.strokeStyle = "#F00";
+            canvasTag.arc(0,0,15,0,Math.PI*2);
+            canvasTag.stroke();*/
+
     };
 
     // move balls
@@ -103,7 +122,7 @@
     };
 
     // lavalamp constructor
-    const LavaLamp = function (width, height, numBalls, color) {
+    const LavaLamp = function (width, height, color) {
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -129,10 +148,11 @@
             )
         }
 
-        // create bubbles
+   /*     // create bubbles
         for (var k = 0; k < numBalls; k++) {
             this.balls[k] = new Ball(this);
-        }
+        }*/
+
     };
     // compute cell force
     LavaLamp.prototype.computeForce = function (x, y, idx) {
@@ -155,6 +175,7 @@
         this.grid[id].force = force;
         return force;
     };
+
     // compute cell
     LavaLamp.prototype.marchingSquares = function (next) {
         var x = next[0];
@@ -244,36 +265,84 @@
         }
     };
 
-/*    // gradients
-    var createRadialGradient = function (w, h, r, c0, c1) {
-        var gradient = ctx.createRadialGradient(
-            w / 1, h / 1, 0,
-            w / 1, h / 1, r
-        );
-        gradient.addColorStop(0, c0);
-        gradient.addColorStop(1, c1);
-        return gradient;
-    };*/
+    /*    // gradients
+        var createRadialGradient = function (w, h, r, c0, c1) {
+            var gradient = ctx.createRadialGradient(
+                w / 1, h / 1, 0,
+                w / 1, h / 1, r
+            );
+            gradient.addColorStop(0, c0);
+            gradient.addColorStop(1, c1);
+            return gradient;
+        };*/
 
-    // main loop
-    var run = function () {
-        requestAnimationFrame(run);
-        ctx.clearRect(0, 0, screen.width, screen.height);
-        lava0.renderBubbles();
-        lava1.renderBubbles();
-        lava2.renderBubbles();
-        lava3.renderBubbles();
-    };
     // canvas
     var screen = ge1doot.screen.init("bubble", null, true),
         ctx = screen.ctx;
     screen.resize();
     // create LavaLamps
-    lava0 = new LavaLamp(screen.width, screen.height, 2, "#FFD850");
-    lava1 = new LavaLamp(screen.width, screen.height, 3, "#FFA370");
-    lava2 = new LavaLamp(screen.width, screen.height, 4, "#FF7D7D");
-    lava3 = new LavaLamp(screen.width, screen.height, 5, "#05AFBA");
+    const clients = {};
 
+    // main loop
+    var run = function () {
+        requestAnimationFrame(run);
+        ctx.clearRect(0, 0, screen.width, screen.height);
+
+
+        Object.values(clients).forEach(client => client.renderBubbles())
+    };
+
+
+
+  /*  lava0 = new LavaLamp(screen.width, screen.height, 3, "#FFD850");
+    lava1 = new LavaLamp(screen.width, screen.height, 3, "#FFA370");
+    lava2 = new LavaLamp(screen.width, screen.height, 3, "#FF7D7D");
+    lava3 = new LavaLamp(screen.width, screen.height, 3, "#05AFBA");*/
+
+    //////////////
+// Create a client instance
+    const client = new Paho.MQTT.Client("broker.hivemq.com", 8000, "bubbleClient34526246");
+
+// set callback handlers
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+
+// connect the client
+    client.connect({onSuccess: onConnect});
+
+
+// called when the client connects
+    function onConnect() {
+        // Once a connection has been made, make a subscription and send a message.
+        console.log("onConnect");
+        client.subscribe("8b4dac03-9840-46fb-8eaf-30bb4f4a8384");
+    }
+
+// called when the client loses its connection
+    function onConnectionLost(responseObject) {
+        if (responseObject.errorCode !== 0) {
+            console.log("onConnectionLost:" + responseObject.errorMessage);
+        }
+    }
+
+// called when a message arrives
+    function onMessageArrived(message) {
+        console.log(JSON.parse(message.payloadString));
+        const eventMessage = JSON.parse(message.payloadString);
+
+        switch (eventMessage.event) {
+            case 'esp32_client_connected':
+            case 'ble_client_connected':
+                clients[eventMessage.device_address] = new LavaLamp(screen.width, screen.height, "#FFD850");
+
+                break;
+            case 'notification_arrived':
+
+                break;
+
+        }
+    }
+/////////////////////
 
     run();
 
