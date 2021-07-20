@@ -2,7 +2,11 @@
 
     "use strict";
 
-    var lava0;
+    let lava0;
+    let lava1;
+    let lava2;
+    let lava3;
+
     var ge1doot = {
         screen: {
             elem: null,
@@ -15,7 +19,7 @@
             init: function (id, callback, initRes) {
                 this.elem = document.getElementById(id);
                 this.callback = callback || null;
-                if (this.elem.tagName == "CANVAS") this.ctx = this.elem.getContext("2d");
+                if (this.elem.tagName === "CANVAS") this.ctx = this.elem.getContext("2d");
                 window.addEventListener('resize', function () {
                     this.resize();
                 }.bind(this), false);
@@ -99,7 +103,7 @@
     };
 
     // lavalamp constructor
-    var LavaLamp = function (width, height, numBalls, c0, c1) {
+    var LavaLamp = function (width, height, numBalls, color) {
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -107,7 +111,8 @@
         this.sx = Math.floor(this.width / this.step);
         this.sy = Math.floor(this.height / this.step);
         this.paint = false;
-        this.metaFill = createRadialGradient(width, height, width, c0, c1);
+       /* this.metaFill = createRadialGradient(width, height, width, c0, c1); */
+        this.metaFill = color;
         this.plx = [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0];
         this.ply = [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1];
         this.mscases = [0, 3, 0, 3, 1, 3, 0, 3, 2, 2, 0, 2, 1, 1, 0];
@@ -255,13 +260,20 @@
         requestAnimationFrame(run);
         ctx.clearRect(0, 0, screen.width, screen.height);
         lava0.renderMetaballs();
+        lava1.renderMetaballs();
+        lava2.renderMetaballs();
+        lava3.renderMetaballs();
     };
     // canvas
     var screen = ge1doot.screen.init("bubble", null, true),
         ctx = screen.ctx;
     screen.resize();
     // create LavaLamps
-    lava0 = new LavaLamp(screen.width, screen.height, 6, "#FF9298", "#E4008E");
+    lava0 = new LavaLamp(screen.width, screen.height, 2, "#FFD850");
+    lava1 = new LavaLamp(screen.width, screen.height, 3, "#FFA370");
+    lava2 = new LavaLamp(screen.width, screen.height, 4, "#FF7D7D");
+    lava3 = new LavaLamp(screen.width, screen.height, 5, "#05AFBA");
+
 
     run();
 
