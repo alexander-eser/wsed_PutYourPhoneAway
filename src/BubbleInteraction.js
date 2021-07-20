@@ -72,7 +72,7 @@
             parent.width * 0.2 + Math.random() * parent.width * 0.6,
             parent.height * 0.2 + Math.random() * parent.height * 0.6
         );
-        this.size = (parent.wh / 15) + (Math.random() * (max - min) + min) * (parent.wh / 15);
+        this.size = (parent.wh / 25) + (Math.random() * (max - min) + min) * (parent.wh / 25);
         this.width = parent.width;
         this.height = parent.height;
     };
@@ -103,7 +103,7 @@
     };
 
     // lavalamp constructor
-    var LavaLamp = function (width, height, numBalls, color) {
+    const LavaLamp = function (width, height, numBalls, color) {
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -111,7 +111,7 @@
         this.sx = Math.floor(this.width / this.step);
         this.sy = Math.floor(this.height / this.step);
         this.paint = false;
-       /* this.metaFill = createRadialGradient(width, height, width, c0, c1); */
+        /* this.metaFill = createRadialGradient(width, height, width, c0, c1); */
         this.metaFill = color;
         this.plx = [0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0];
         this.ply = [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1];
@@ -129,7 +129,7 @@
             )
         }
 
-        // create metaballs
+        // create bubbles
         for (var k = 0; k < numBalls; k++) {
             this.balls[k] = new Ball(this);
         }
@@ -211,7 +211,7 @@
         }
     };
 
-    LavaLamp.prototype.renderMetaballs = function () {
+    LavaLamp.prototype.renderBubbles = function () {
         var i = 0, ball;
         while (ball = this.balls[i++]) ball.move();
         // reset grid
@@ -220,7 +220,7 @@
         this.paint = false;
         ctx.fillStyle = this.metaFill;
         ctx.beginPath();
-        // compute metaballs
+        // compute bubbles
         i = 0;
         //ctx.shadowBlur = 50;
         //ctx.shadowColor = "green";
@@ -244,7 +244,7 @@
         }
     };
 
-    // gradients
+/*    // gradients
     var createRadialGradient = function (w, h, r, c0, c1) {
         var gradient = ctx.createRadialGradient(
             w / 1, h / 1, 0,
@@ -253,16 +253,16 @@
         gradient.addColorStop(0, c0);
         gradient.addColorStop(1, c1);
         return gradient;
-    };
+    };*/
 
     // main loop
     var run = function () {
         requestAnimationFrame(run);
         ctx.clearRect(0, 0, screen.width, screen.height);
-        lava0.renderMetaballs();
-        lava1.renderMetaballs();
-        lava2.renderMetaballs();
-        lava3.renderMetaballs();
+        lava0.renderBubbles();
+        lava1.renderBubbles();
+        lava2.renderBubbles();
+        lava3.renderBubbles();
     };
     // canvas
     var screen = ge1doot.screen.init("bubble", null, true),
