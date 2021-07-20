@@ -55,8 +55,8 @@ class Point {
 }
 
 class Bubble {
-
-    constructor(parent, isDeviceBubble) {
+    constructor (parent, isDeviceBubble, data) {
+        this.data = data;
         const min = .1;
         const max = 1.5;
         this.vel = new Point(
@@ -69,16 +69,13 @@ class Bubble {
         );
 
         if (isDeviceBubble) {
-            this.size = (parent.wh / 5) + (Math.random() * (max - min) + min) * (parent.wh / 5);
-
+            this.size = 120;
         } else {
-            this.size = (parent.wh / 25) + (Math.random() * (max - min) + min) * (parent.wh / 25);
+            this.size = 50;
         }
 
         this.width = parent.width;
         this.height = parent.height;
-
-
     }
 
     move() {
@@ -106,6 +103,7 @@ class Bubble {
 
 class DeviceCanvas {
     constructor(width, height, color) {
+        console.log(`[DeviceCanvas]: ${width}, ${height}, ${color}`)
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -132,6 +130,10 @@ class DeviceCanvas {
             ));
 
         this.balls.push(new Bubble(this, true));
+    }
+
+    addBubble(data) {
+        this.balls.push(new Bubble(this, false, data));
     }
 
     // Compute cell force
@@ -248,7 +250,17 @@ const screen = canvasWrapper.screen.init("bubble", null, true);
 const ctx = screen.ctx;
 screen.resize();
 
-const clients = {};
+const colors = ["#FFD850","#FFA370","#FF7D7D", "#05AFBA"];
+const devices = {};
+const getOrCreateDevice = (address) => {
+    let device = devices[address]
+    if (!device) {
+        const color = colors[Object.keys(devices).length % (colors.length - 1)];
+        device = new DeviceCanvas(screen.width, screen.height, color);
+        devices[address] = device;
+    }
+    return device;
+}
 
 // main loop
 const run = () => {
@@ -256,13 +268,9 @@ const run = () => {
     ctx.clearRect(0, 0, screen.width, screen.height);
 
     // Render Bubbles for each DeviceCanvas
-    Object.values(clients).forEach(lavaLamp => lavaLamp.renderBubbles())
+    Object.values(devices).forEach(lavaLamp => lavaLamp.renderBubbles())
 };
-
-/*  lava0 = new DeviceCanvas(screen.width, screen.height, 3, "#FFD850");
-  lava1 = new DeviceCanvas(screen.width, screen.height, 3, "#FFA370");
-  lava2 = new DeviceCanvas(screen.width, screen.height, 3, "#FF7D7D");
-  lava3 = new DeviceCanvas(screen.width, screen.height, 3, "#05AFBA");*/
+run();
 
 // Create a client instance
 const client = new Paho.MQTT.Client("broker.hivemq.com", 8000, `bubbleClient${new Date().getTime()}`);
@@ -281,12 +289,11 @@ client.onMessageArrived = (message) => {
     switch (eventMessage.event) {
         case 'esp32_client_connected':
         case 'ble_client_connected':
-            if (eventMessage.device_address) {
-                clients[eventMessage.device_address] = new DeviceCanvas(screen.width, screen.height, "#FFD850");
-            }
+            if (eventMessage.device_address) getOrCreateDevice(eventMessage.device_address);
             break;
         case 'notification_arrived':
-            clients[eventMessage.device_address] = new Bubble(this, false);
+            const client = getOrCreateDevice(eventMessage.device_address);
+            client.addBubble(eventMessage);
             break;
     }
 };
@@ -299,5 +306,3 @@ client.connect({
         client.subscribe("8b4dac03-9840-46fb-8eaf-30bb4f4a8384");
     }
 });
-
-run();
