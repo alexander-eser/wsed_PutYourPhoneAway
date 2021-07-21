@@ -299,7 +299,7 @@ const screen = canvasWrapper.screen.init("bubble", null, true);
 const ctx = screen.ctx;
 screen.resize();
 
-const colors = ["#275232","#338d4f","#75ab55", "#b3be52", "#e1cc5c"];
+const colors = ["#333f3a","#456c68","#549c9a", "#86aba1", "#b0b9a9"];
 const devices = {};
 const getOrCreateDevice = (address) => {
     let device = devices[address]
