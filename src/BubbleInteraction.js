@@ -77,9 +77,8 @@ class Bubble {
         this.isDeviceBubble = isDeviceBubble;
 
         this.vel = new Point(
-            0.2, 0.2
-           /* (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25),
-            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())*/
+            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.1),
+            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.1)
         );
 
         this.pos = isDeviceBubble ? new Point(
@@ -159,11 +158,16 @@ class DeviceCanvas {
                 (Math.floor(i / (this.sx + 2))) * this.step
             ));
 
-        this.balls.push(new Bubble(this, true));
+        if(this.balls.length === 0) this.balls.push(new Bubble(this, true));
     }
 
     getDeviceBubblePosition() {
-        return this.balls[0].pos;
+        let deviceBubble = this.balls[0];
+        if (!deviceBubble) {
+            deviceBubble = new Bubble(this, true);
+            this.balls.push(deviceBubble);
+        }
+        return deviceBubble ? deviceBubble.pos : null;
     }
 
     addBubble(data) {
@@ -256,9 +260,11 @@ class DeviceCanvas {
         if (!this.visible) return;
 
         const deviceBubblePos = this.getDeviceBubblePosition();
-        if (!this.alive && this.balls.every(b => b.pos.delta(deviceBubblePos).magnitude < 10)){
+        if (!this.alive && deviceBubblePos && this.balls.every(b => b.pos.delta(deviceBubblePos).magnitude < 10)){
             this.balls.splice(-1, Infinity);
             this.visible = false;
+            const audioPutOut = new Audio('../resources/Put_Out_Smartphone.Wav');
+            audioPutOut.play();
             return;
         }
 
@@ -355,8 +361,6 @@ client.onMessageArrived = (message) => {
             if (eventMessage.device_address) {
                 const device = getOrCreateDevice(eventMessage.device_address);
                 device.setAlive(false);
-                const audioPutOut = new Audio('../resources/Put_Out_Smartphone.Wav');
-                audioPutOut.play();
             }
             break;
     }
