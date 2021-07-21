@@ -55,10 +55,12 @@ class Point {
 }
 
 class Bubble {
-    constructor (parent, isDeviceBubble, data) {
+    constructor(parent, isDeviceBubble, data) {
         this.data = data;
         const min = .1;
         const max = 1.5;
+        this.parent = parent;
+
         this.vel = new Point(
             (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25),
             (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())
@@ -97,6 +99,13 @@ class Bubble {
             this.pos.y = this.size;
         }
 
+        // if (!this.parent.isAlive) {
+        //     const parentPos = this.parent.getDeviceBubblePosition();
+        //     this.vel = new Point(
+        //         parentPos.x - this.pos.x
+        //     )
+        // }
+
         // velocity
         this.pos = this.pos.add(this.vel);
     }
@@ -105,6 +114,7 @@ class Bubble {
 class DeviceCanvas {
     constructor(width, height, color) {
         console.log(`[DeviceCanvas]: ${width}, ${height}, ${color}`)
+        this.alive = true;
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -139,6 +149,10 @@ class DeviceCanvas {
 
     addBubble(data) {
         this.balls.push(new Bubble(this, false, data));
+    }
+
+    setAlive(isAlive) {
+        this.alive = isAlive;
     }
 
     // Compute cell force
@@ -251,8 +265,6 @@ class DeviceCanvas {
     };
 }
 
-
-
 const screen = canvasWrapper.screen.init("bubble", null, true);
 const ctx = screen.ctx;
 screen.resize();
@@ -296,11 +308,24 @@ client.onMessageArrived = (message) => {
     switch (eventMessage.event) {
         case 'esp32_client_connected':
         case 'ble_client_connected':
-            if (eventMessage.device_address) getOrCreateDevice(eventMessage.device_address);
+            if (eventMessage.device_address) {
+                const device = getOrCreateDevice(eventMessage.device_address);
+                device.setAlive(true);
+                const audioPutIn = new Audio('../resources/Put_In_Smartphone.Wav');
+                audioPutIn.play();
+            }
             break;
         case 'notification_arrived':
             const client = getOrCreateDevice(eventMessage.device_address);
             client.addBubble(eventMessage);
+            break;
+        case 'ble_client_disconnected':
+            if (eventMessage.device_address) {
+                const device = getOrCreateDevice(eventMessage.device_address);
+                device.setAlive(false);
+                const audioPutOut = new Audio('../resources/Put_Out_Smartphone.Wav');
+                audioPutOut.play();
+            }
             break;
     }
 };
