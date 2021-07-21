@@ -159,6 +159,9 @@ class DeviceCanvas {
             ));
 
         if(this.balls.length === 0) this.balls.push(new Bubble(this, true));
+
+        const audioPutIn = new Audio('../resources/Put_In_Smartphone.Wav');
+        audioPutIn.play();
     }
 
     getDeviceBubblePosition() {
@@ -261,7 +264,7 @@ class DeviceCanvas {
 
         const deviceBubblePos = this.getDeviceBubblePosition();
         if (!this.alive && deviceBubblePos && this.balls.every(b => b.pos.delta(deviceBubblePos).magnitude < 10)){
-            this.balls.splice(-1, Infinity);
+            this.balls = [this.balls.shift()]
             this.visible = false;
             const audioPutOut = new Audio('../resources/Put_Out_Smartphone.Wav');
             audioPutOut.play();
@@ -348,8 +351,6 @@ client.onMessageArrived = (message) => {
             if (eventMessage.device_address) {
                 const device = getOrCreateDevice(eventMessage.device_address);
                 device.setAlive(true);
-                const audioPutIn = new Audio('../resources/Put_In_Smartphone.Wav');
-                audioPutIn.play();
             }
             break;
         case 'notification_arrived':
