@@ -62,8 +62,9 @@ class Bubble {
         this.parent = parent;
 
         this.vel = new Point(
-            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25),
-            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())
+            0.2, 0.2
+           /* (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25),
+            (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())*/
         );
 
         this.pos = isDeviceBubble ? new Point(
