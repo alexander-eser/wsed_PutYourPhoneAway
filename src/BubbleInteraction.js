@@ -63,10 +63,11 @@ class Bubble {
             (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.25),
             (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random())
         );
-        this.pos = new Point(
+
+        this.pos = isDeviceBubble ? new Point(
             parent.width * 0.2 + Math.random() * parent.width * 0.6,
             parent.height * 0.2 + Math.random() * parent.height * 0.6
-        );
+        ) : parent.getDeviceBubblePosition();
 
         if (isDeviceBubble) {
             this.size = 120;
@@ -130,6 +131,10 @@ class DeviceCanvas {
             ));
 
         this.balls.push(new Bubble(this, true));
+    }
+
+    getDeviceBubblePosition() {
+        return this.balls[0].pos;
     }
 
     addBubble(data) {
@@ -304,7 +309,7 @@ client.onMessageArrived = (message) => {
 client.connect({
     onSuccess() {
         // Once a connection has been made, make a subscription and send a message.
-        console.log("onConnect");
+        console.log("Connected to MQTT Broker");
         client.subscribe("8b4dac03-9840-46fb-8eaf-30bb4f4a8384");
     }
 });
