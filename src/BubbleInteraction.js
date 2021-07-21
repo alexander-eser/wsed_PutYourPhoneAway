@@ -55,7 +55,7 @@ class Point {
 }
 
 class Bubble {
-    constructor (parent, isDeviceBubble, data) {
+    constructor(parent, isDeviceBubble, data) {
         this.data = data;
         const min = .1;
         const max = 1.5;
@@ -250,7 +250,7 @@ const screen = canvasWrapper.screen.init("bubble", null, true);
 const ctx = screen.ctx;
 screen.resize();
 
-const colors = ["#FFD850","#FFA370","#FF7D7D", "#05AFBA"];
+const colors = ["#FFD850", "#FFA370", "#FF7D7D", "#05AFBA"];
 const devices = {};
 const getOrCreateDevice = (address) => {
     let device = devices[address]
@@ -290,12 +290,18 @@ client.onMessageArrived = (message) => {
         case 'esp32_client_connected':
         case 'ble_client_connected':
             if (eventMessage.device_address) getOrCreateDevice(eventMessage.device_address);
+            const audioPutIn = new Audio('../resources/Put_In_Smartphone.Wav');
+            audioPutIn.play();
             break;
         case 'notification_arrived':
             const client = getOrCreateDevice(eventMessage.device_address);
             client.addBubble(eventMessage);
             break;
+        case 'ble_client_disconnected':
+            const audioPutOut = new Audio('../resources/Put_Out_Smartphone.Wav');
+            audioPutOut.play();
     }
+
 };
 
 // connect the client
