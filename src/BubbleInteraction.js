@@ -49,8 +49,22 @@ class Point {
         this.force = 0;
     }
 
+    delta(p) {
+        return new Point(p.x - this.x, p.y - this.y);
+    }
+
     add(p) {
         return new Point(this.x + p.x, this.y + p.y);
+    }
+
+    multiply(p) {
+        return new Point(this.x * p.x, this.y * p.y);
+    }
+
+    norm() {
+        const m = Math.sqrt(this.magnitude);
+        if (m > 0) return this.multiply(new Point(1/m,1/m));
+        return new Point(0,0);
     }
 }
 
@@ -60,6 +74,7 @@ class Bubble {
         const min = .1;
         const max = 1.5;
         this.parent = parent;
+        this.isDeviceBubble = isDeviceBubble;
 
         this.vel = new Point(
             0.2, 0.2
@@ -100,12 +115,14 @@ class Bubble {
             this.pos.y = this.size;
         }
 
-        // if (!this.parent.isAlive) {
-        //     const parentPos = this.parent.getDeviceBubblePosition();
-        //     this.vel = new Point(
-        //         parentPos.x - this.pos.x
-        //     )
-        // }
+        if (!this.isDeviceBubble && !this.parent.alive) {
+            const parentPos = this.parent.getDeviceBubblePosition();
+            const delta = new Point(
+                parentPos.x - this.pos.x,
+                parentPos.y - this.pos.y,
+            );
+            this.vel = delta.norm().multiply(new Point(2,2))
+        }
 
         // velocity
         this.pos = this.pos.add(this.vel);
@@ -116,6 +133,7 @@ class DeviceCanvas {
     constructor(width, height, color) {
         console.log(`[DeviceCanvas]: ${width}, ${height}, ${color}`)
         this.alive = true;
+        this.visible = true;
         this.step = 5;
         this.width = width;
         this.height = height;
@@ -153,6 +171,8 @@ class DeviceCanvas {
     }
 
     setAlive(isAlive) {
+        console.log(`Alive: ${isAlive}`)
+        if (isAlive) this.visible = true;
         this.alive = isAlive;
     }
 
@@ -233,8 +253,18 @@ class DeviceCanvas {
     };
 
     renderBubbles() {
+        if (!this.visible) return;
+
+        const deviceBubblePos = this.getDeviceBubblePosition();
+        if (!this.alive && this.balls.every(b => b.pos.delta(deviceBubblePos).magnitude < 10)){
+            this.balls.splice(-1, Infinity);
+            this.visible = false;
+            return;
+        }
+
         var i = 0, ball;
         while (ball = this.balls[i++]) ball.move();
+
         // reset grid
         this.iter++;
         this.sign = -this.sign;
@@ -270,7 +300,7 @@ const screen = canvasWrapper.screen.init("bubble", null, true);
 const ctx = screen.ctx;
 screen.resize();
 
-const colors = ["#333f3a","#456c68","#549c9a", "#86aba1", "#b0b9a9"];
+const colors = ["#324e4b","#456c68","#549c9a", "#86aba1", "#b0b9a9"];
 const devices = {};
 const getOrCreateDevice = (address) => {
     let device = devices[address]
@@ -317,8 +347,9 @@ client.onMessageArrived = (message) => {
             }
             break;
         case 'notification_arrived':
-            const client = getOrCreateDevice(eventMessage.device_address);
-            client.addBubble(eventMessage);
+            const device = getOrCreateDevice(eventMessage.device_address);
+            device.setAlive(true);
+            device.addBubble(eventMessage);
             break;
         case 'ble_client_disconnected':
             if (eventMessage.device_address) {
